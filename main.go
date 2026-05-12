@@ -18,9 +18,9 @@ func main() {
 		if !ok {
 			fmt.Printf("Unknown command\n")
 		} else {
-			err := c.callback(c.config)
+			err := c.callback(c.config, c.cache)
 			if err != nil {
-				fmt.Printf("%v", err)
+				fmt.Printf("%v\n", err)
 				continue
 			}
 		}

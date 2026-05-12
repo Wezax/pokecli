@@ -4,14 +4,18 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
+
 	"github.com/Wezax/pokecli/internal/pokeapi"
+	"github.com/Wezax/pokecli/internal/pokecache"
 )
 
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config) error
+	callback    func(*config, *pokecache.Cache) error
 	config      *config
+	cache       *pokecache.Cache
 }
 
 type config struct {
@@ -28,6 +32,7 @@ func getConfig() *config {
 
 func getCommandsMap() map[string]cliCommand {
 	config := getConfig()
+	cache := pokecache.NewCache(5 * time.Minute)
 	return map[string]cliCommand{
 		"exit": {
 			name:        "exit",
@@ -46,23 +51,25 @@ func getCommandsMap() map[string]cliCommand {
 			description: "Get next 20 locations",
 			callback:    commandMap,
 			config:      config,
+			cache:       cache,
 		},
 		"mapb": {
 			name:        "mapb",
 			description: "Get previous 20 locations",
 			callback:    commandMapb,
 			config:      config,
+			cache:       cache,
 		},
 	}
 }
 
-func commandExit(c *config) error {
+func commandExit(c *config, cache *pokecache.Cache) error {
 	fmt.Printf("Closing the Pokedex... Goodbye!\n")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(c *config) error {
+func commandHelp(c *config, cache *pokecache.Cache) error {
 	fmt.Printf("Welcome to the Pokedex!\n")
 	fmt.Printf("Usage:\n")
 	for _, c := range getCommandsMap() {
@@ -71,12 +78,12 @@ func commandHelp(c *config) error {
 	return nil
 }
 
-func commandMap(c *config) error {
+func commandMap(c *config, cache *pokecache.Cache) error {
 	if c.Next == "" {
 		return errors.New("Something went wrong with link retrival")
 	}
 	url := c.Next
-	obj, err := pokeapi.GetLocationArea(url)
+	obj, err := pokeapi.GetLocationArea(url, cache)
 	if err != nil {
 		return err
 	}
@@ -92,12 +99,12 @@ func commandMap(c *config) error {
 	return nil
 }
 
-func commandMapb(c *config) error {
+func commandMapb(c *config, cache *pokecache.Cache) error {
 	if c.Previous == "" {
 		return errors.New("You are on first page\n")
 	}
 	url := c.Previous
-	obj, err := pokeapi.GetLocationArea(url)
+	obj, err := pokeapi.GetLocationArea(url, cache)
 	if err != nil {
 		return err
 	}

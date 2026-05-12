@@ -2,7 +2,9 @@ package pokeapi
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
+	"github.com/Wezax/pokecli/internal/pokecache"
 )
 
 type LocationArea struct {
@@ -15,15 +17,22 @@ type LocationArea struct {
 	} `json:"results"`
 }
 
-func GetLocationArea(url string) (LocationArea, error) {
-	res, err := http.Get(url)
-	if err != nil {
-		return LocationArea{}, err
+func GetLocationArea(url string, cache *pokecache.Cache) (LocationArea, error) {
+	bytes, ok := cache.Get(url);
+	if !ok {
+		res, err := http.Get(url)
+		if err != nil {
+			return LocationArea{}, err
+		}
+		bytes, err = io.ReadAll(res.Body)
+		if err != nil {
+			return LocationArea{}, err
+		}
+		cache.Add(url, bytes)
+		defer res.Body.Close()		
 	}
-	defer res.Body.Close()
 	var dto LocationArea
-	decoder := json.NewDecoder(res.Body)
-	err = decoder.Decode(&dto)
+	err := json.Unmarshal(bytes, &dto)
 	if err != nil {
 		return LocationArea{}, err
 	}
