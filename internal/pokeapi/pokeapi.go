@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"github.com/Wezax/pokecli/internal/pokecache"
 )
 
 type LocationArea struct {
@@ -17,8 +16,8 @@ type LocationArea struct {
 	} `json:"results"`
 }
 
-func GetLocationArea(url string, cache *pokecache.Cache) (LocationArea, error) {
-	bytes, ok := cache.Get(url);
+func (c* Client) GetLocationArea(url string) (LocationArea, error) {
+	bytes, ok := c.cache.Get(url);
 	if !ok {
 		res, err := http.Get(url)
 		if err != nil {
@@ -28,7 +27,7 @@ func GetLocationArea(url string, cache *pokecache.Cache) (LocationArea, error) {
 		if err != nil {
 			return LocationArea{}, err
 		}
-		cache.Add(url, bytes)
+		c.cache.Add(url, bytes)
 		defer res.Body.Close()		
 	}
 	var dto LocationArea
