@@ -10,7 +10,7 @@ import (
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config) error
+	callback    func(*config, *string) error
 }
 
 type config struct {
@@ -42,16 +42,21 @@ func getCommandsMap() map[string]cliCommand {
 			description: "Get previous 20 locations",
 			callback:    commandMapb,
 		},
+		"explore": {
+			name: "explore",
+			description: "Get Pokemon names in given location",
+			callback: commandExplore,
+		},
 	}
 }
 
-func commandExit(c *config) error {
+func commandExit(c *config, arg *string) error {
 	fmt.Printf("Closing the Pokedex... Goodbye!\n")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(c *config) error {
+func commandHelp(c *config, arg *string) error {
 	fmt.Printf("Welcome to the Pokedex!\n")
 	fmt.Printf("Usage:\n")
 	for _, c := range getCommandsMap() {
@@ -60,7 +65,7 @@ func commandHelp(c *config) error {
 	return nil
 }
 
-func commandMap(c *config) error {
+func commandMap(c *config, arg *string) error {
 	if c.Next == "" {
 		return errors.New("Something went wrong with link retrival")
 	}
@@ -81,7 +86,7 @@ func commandMap(c *config) error {
 	return nil
 }
 
-func commandMapb(c *config) error {
+func commandMapb(c *config, arg *string) error {
 	if c.Previous == "" {
 		return errors.New("You are on first page\n")
 	}
@@ -102,6 +107,26 @@ func commandMapb(c *config) error {
 	c.Next = obj.Next
 	for _, r := range obj.Results {
 		fmt.Printf("%s\n", r.Name)
+	}
+	return nil
+}
+
+func commandExplore(c *config, arg *string) error {
+	url := "https://pokeapi.co/api/v2/location-area/"
+	if arg == nil {
+		return errors.New("No name given!")
+	}
+	obj, err := c.pokeapiClient.GetLocationAreaByName(url, arg)
+	if err != nil {
+		return fmt.Errorf("Something went wrong: %v\n", err)
+	}
+	fmt.Printf("Exploring %s...\n", *arg)
+	if len(obj.PokemonEncounters) <= 0 {
+		return fmt.Errorf("No Pokemon encountered in: %s\n", *arg)
+	}
+	fmt.Printf("Found Pokemon:\n")
+	for _, encounter := range obj.PokemonEncounters {
+		fmt.Printf("%s\n", encounter.Pokemon.Name)
 	}
 	return nil
 }

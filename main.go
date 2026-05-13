@@ -26,7 +26,11 @@ func main() {
 		if !ok {
 			fmt.Printf("Unknown command\n")
 		} else {
-			err := c.callback(config)
+			var arg *string
+			if len(strippedCommand) > 1 {
+				arg = &strippedCommand[1]
+			}
+			err := c.callback(config, arg)
 			if err != nil {
 				fmt.Printf("%v\n", err)
 				continue
