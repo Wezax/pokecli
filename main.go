@@ -14,6 +14,7 @@ func main() {
 	commandMap := getCommandsMap()
 	config := &config{
 		pokeapiClient: pokeapi.NewClient(5 * time.Second, 5 * time.Minute),
+		caughtPokemon: make(map[string]pokeapi.GetPokemon),
 		Previous:      "",
 		Next:          "https://pokeapi.co/api/v2/location-area?offset=0&limit=20",
 	}
